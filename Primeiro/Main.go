@@ -1,13 +1,20 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
+
+type Absoluto interface {
+	Abs() float64
+}
 
 type Localizacao struct {
 	Latitude, Longitude float64
@@ -27,6 +34,8 @@ func main() {
 	7 - Montar mapa
 	8 - Exibir localização
 	9 - Abrir arquivo de texto
+	10 - Gerar erro
+	11 - Assert Type
 	0 - Sair`)
 
 	switch opcao {
@@ -48,9 +57,78 @@ func main() {
 		ExibirLocalizacao()
 	case 9:
 		AbrirArquivoTexto()
+	case 10:
+		GerarErro()
+	case 11:
+		AssertType()
+	case 12:
+		DoAbs()
 	default:
 		break
 	}
+}
+
+func DoAbs() {
+	var a Absoluto
+	f := MyFloat(-math.Sqrt2)
+	v := Vertex{3, 4}
+
+	a = f
+	a = &v
+
+	//a = v //v � Vertex e n�o *Vertex e n�o implementa Absoluto
+	fmt.Println(a.Abs())
+}
+
+type MyFloat float64
+
+func (f MyFloat) Abs() float64 {
+	if f < 0 {
+		return float64(-f)
+	}
+	return float64(f)
+}
+
+type Vertex struct {
+	X, Y float64
+}
+
+func (v *Vertex) Abs() float64 {
+	return math.Sqrt(v.X*v.X + v.Y*v.Y)
+}
+
+func AssertType() {
+	var i interface{} = "Hello"
+
+	s := i.(string)
+	fmt.Println(s)
+
+	s, ok := i.(string)
+	fmt.Println(s, ok)
+
+	f, ok := i.(float64)
+	fmt.Println(f, ok)
+
+	f = i.(float64) //panic
+	fmt.Println(f)
+}
+
+func GerarErro() {
+	var err = GetErro()
+	if err != nil {
+		// log.Fatal(err)
+		panic("Panicking!")
+		// fmt.Println(err)
+	}
+	defer fmt.Println("Defer depois")
+}
+
+func GetErro() error {
+	if 1 < 2 {
+		return fmt.Errorf("Deu um erro: %d é menor que %d", 1, 2)
+		// return errors.New("Erro: Um definitivamente é menor que 2")
+	}
+	return errors.New("Erro: Não deu erro?")
 }
 
 func AbrirArquivoTexto() {
@@ -62,14 +140,16 @@ func AbrirArquivoTexto() {
 
 	var arquivo, erroOpen = os.Open(caminho)
 	if erroOpen != nil {
-		fmt.Printf("Erro ao abrir o arquivo: %s\n", erroOpen)
+		log.Fatal(erroOpen)
+		// fmt.Printf("Erro ao abrir o arquivo: %s\n", erroOpen)
 		return
 	}
-	defer arquivo.Close()
+	defer arquivo.Close() //defer é semelhante ao finnaly
 
 	var conteudo, erroRead = io.ReadAll(arquivo)
 	if erroRead != nil {
-		fmt.Printf("Erro ao ler o arquivo: %s\n", erroRead)
+		log.Fatal(erroRead)
+		// fmt.Printf("Erro ao ler o arquivo: %s\n", erroRead)
 		return
 	}
 
@@ -115,7 +195,7 @@ func AreaRetangulo() {
 	var base, altura = InputInt("Informe a base"), InputInt("Informe a altura")
 	var area, parametro int
 	area, parametro = GetAreaRetangulo(base, altura)
-	fmt.Printf("Área: %d\nParametro: %d", area, parametro)
+	fmt.Printf("Ýrea: %d\nParametro: %d", area, parametro)
 }
 
 func GetAreaRetangulo(base, altura int) (area, parametro int) {
